@@ -10,6 +10,7 @@ import type { RouteEditor } from './editor';
 import { GameplayNavigation } from './navigation';
 import { applyTranslations, currentLocale, localeCode, sectionLabel, setLocale, translate, type Locale } from './i18n';
 import { AMF_DOWNLOAD, downloadHref } from './download-config';
+import { DesktopModeController } from './desktop-mode';
 const $=<T extends HTMLElement>(selector:string)=>document.querySelector<T>(selector)!;
 const canvas=$<HTMLCanvasElement>('#map'),foregroundCanvas=$<HTMLCanvasElement>('#map-foreground'),overlay=$<HTMLCanvasElement>('#overlay'),ctx=overlay.getContext('2d')!;
 const load=$('#load'),detail=$('#load-detail');
@@ -22,18 +23,22 @@ let navigation:GameplayNavigation;
 let navHighlight:HTMLSpanElement|undefined,navObserver:ResizeObserver|undefined,navHighlightReady=false;
 let entities=false,raf=0,last=performance.now(),clockStart=performance.now(),activeSection='',disposed=false;
 let entityImage:HTMLImageElement,speedArrowImage:HTMLImageElement,worker:Worker|undefined;
-const removers:(()=>void)[]=[];
-function on(target:EventTarget,name:string,fn:EventListener,options?:AddEventListenerOptions){target.addEventListener(name,fn,options);removers.push(()=>target.removeEventListener(name,fn,options));}
+const appRemovers:(()=>void)[]=[],persistentRemovers:(()=>void)[]=[];
+let appStarted=false,startController:AbortController|undefined;
+function on(target:EventTarget,name:string,fn:EventListener,options?:AddEventListenerOptions){target.addEventListener(name,fn,options);appRemovers.push(()=>target.removeEventListener(name,fn,options));}
+function onPersistent(target:EventTarget,name:string,fn:EventListener,options?:AddEventListenerOptions){target.addEventListener(name,fn,options);persistentRemovers.push(()=>target.removeEventListener(name,fn,options));}
 function localizeText(element:HTMLElement,value:string){
   const key=value.startsWith('i18n:')?value.slice(5):'';
   if(key){element.dataset.i18n=key;element.textContent=translate(key);}else{delete element.dataset.i18n;element.textContent=value;}
 }
 function refreshLocalization(){
   applyTranslations();
-  const trigger=$<HTMLButtonElement>('#language-trigger'),menu=$<HTMLDivElement>('#language-menu');
-  $('#language-code').textContent=localeCode();
-  trigger.setAttribute('aria-label',translate('language.choose'));
-  for(const option of menu.querySelectorAll<HTMLButtonElement>('[data-locale]'))option.setAttribute('aria-selected',String(option.dataset.locale===currentLocale()));
+  for(const code of document.querySelectorAll<HTMLElement>('[data-language-code]'))code.textContent=localeCode();
+  for(const picker of document.querySelectorAll<HTMLElement>('.language-switcher')){
+    const trigger=picker.querySelector<HTMLButtonElement>('[data-language-trigger]');
+    if(trigger)trigger.setAttribute('aria-label',translate('language.choose'));
+    for(const option of picker.querySelectorAll<HTMLButtonElement>('[data-locale]'))option.setAttribute('aria-selected',String(option.dataset.locale===currentLocale()));
+  }
   const nav=$('header nav');nav.setAttribute('aria-label',translate('nav.siteSections'));
   for(const button of nav.querySelectorAll<HTMLButtonElement>('[data-section]')){
     button.textContent=sectionLabel(button.dataset.section??'');
@@ -46,21 +51,30 @@ function refreshLocalization(){
   document.dispatchEvent(new Event('amf-locale-change'));
 }
 function initLanguagePicker(){
-  const trigger=$<HTMLButtonElement>('#language-trigger'),menu=$<HTMLDivElement>('#language-menu');
-  const close=()=>{menu.hidden=true;trigger.setAttribute('aria-expanded','false');};
-  on(trigger,'click',()=>{const open=menu.hidden;menu.hidden=!open;trigger.setAttribute('aria-expanded',String(open));if(open)menu.querySelector<HTMLButtonElement>(`[data-locale="${currentLocale()}"]`)?.focus();});
-  on(menu,'click',event=>{const option=(event.target as Element).closest<HTMLButtonElement>('[data-locale]');if(!option)return;setLocale(option.dataset.locale as Locale);refreshLocalization();close();trigger.focus();});
-  on(document,'pointerdown',event=>{if(!(event.target as Element).closest('.language-switcher'))close();});
-  on(document,'keydown',event=>{if((event as KeyboardEvent).key==='Escape'&&!menu.hidden){close();trigger.focus();}});
+  for(const picker of document.querySelectorAll<HTMLElement>('.language-switcher')){
+    const trigger=picker.querySelector<HTMLButtonElement>('[data-language-trigger]'),menu=picker.querySelector<HTMLDivElement>('[role="listbox"]');
+    if(!trigger||!menu)continue;
+    const close=()=>{menu.hidden=true;trigger.setAttribute('aria-expanded','false');};
+    onPersistent(trigger,'click',()=>{const open=menu.hidden;menu.hidden=!open;trigger.setAttribute('aria-expanded',String(open));if(open)menu.querySelector<HTMLButtonElement>(`[data-locale="${currentLocale()}"]`)?.focus();});
+    onPersistent(menu,'click',event=>{const option=(event.target as Element).closest<HTMLButtonElement>('[data-locale]');if(!option)return;setLocale(option.dataset.locale as Locale);refreshLocalization();close();trigger.focus();});
+    onPersistent(document,'pointerdown',event=>{if(!(event.target as Element).closest('.language-switcher'))close();});
+    onPersistent(document,'keydown',event=>{if((event as KeyboardEvent).key==='Escape'&&!menu.hidden){close();trigger.focus();}});
+  }
 }
-function image(url:string){return new Promise<HTMLImageElement>((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error(`Не удалось загрузить ресурс: ${url}`));i.src=url;});}
-async function loadMap(){
-  const response=await fetch(`${base}maps/for-site.map`);if(!response.ok)throw new Error(`Карта: HTTP ${response.status}`);
+function abortError(){return new DOMException('Desktop application stopped','AbortError');}
+function ensureActive(signal:AbortSignal){if(signal.aborted)throw abortError();}
+function image(url:string,signal:AbortSignal){return new Promise<HTMLImageElement>((resolve,reject)=>{const i=new Image();const cleanup=()=>{signal.removeEventListener('abort',abort);i.onload=null;i.onerror=null;};const abort=()=>{cleanup();i.src='';reject(abortError());};i.onload=()=>{cleanup();resolve(i);};i.onerror=()=>{cleanup();reject(new Error(`Не удалось загрузить ресурс: ${url}`));};if(signal.aborted){abort();return;}signal.addEventListener('abort',abort,{once:true});i.src=url;});}
+async function loadMap(signal:AbortSignal){
+  const response=await fetch(`${base}maps/for-site.map`,{signal});if(!response.ok)throw new Error(`Карта: HTTP ${response.status}`);
   const bytes=await response.arrayBuffer();
   return new Promise<MapModel>((resolve,reject)=>{
+    const cleanup=()=>{signal.removeEventListener('abort',abort);worker?.terminate();worker=undefined;};
+    const abort=()=>{cleanup();reject(abortError());};
+    if(signal.aborted){abort();return;}
     worker=new Worker(new URL('./map/worker.ts',import.meta.url),{type:'module'});
-    worker.onerror=()=>{worker?.terminate();worker=undefined;reject(new Error('Ошибка map worker'));};
-    worker.onmessage=e=>{worker?.terminate();worker=undefined;e.data.ok?resolve(e.data.model):reject(new Error(e.data.error));};
+    worker.onerror=()=>{cleanup();reject(new Error('Ошибка map worker'));};
+    worker.onmessage=e=>{cleanup();e.data.ok?resolve(e.data.model):reject(new Error(e.data.error));};
+    signal.addEventListener('abort',abort,{once:true});
     worker.postMessage(bytes,[bytes]);
   });
 }
@@ -222,22 +236,24 @@ function frame(now:number){
 }
 function report(){const m=model.metadata;return `For Site.map · DATA v${model.version}\n${m.sourceBytes.toLocaleString()} bytes · ${m.gameWidth} × ${m.gameHeight} tiles\n${model.groups.length} groups · ${model.layers.length} layers\n${model.images.length} embedded images · ${m.quads} quads\n${m.tiles} non-empty tiles (all layers)\n${model.envelopes.length} envelopes · ${m.animatedQuads} animated quads\n${m.colorBindings} color-envelope bindings\n${model.warnings.length?'Warnings:\n'+model.warnings.join('\n'):'No unsupported items in this map'}\nClock: independent of camera\nN: real game / front / tele / tune / speedup layers`;} 
 function restartFrame(){cancelAnimationFrame(raf);last=performance.now();if(!document.hidden)raf=requestAnimationFrame(frame);}
-async function start(){
-  [model,entityImage,speedArrowImage]=await Promise.all([loadMap(),image(`${base}assets/ddnet-entities.png`),image(`${base}assets/ddnet-speed-arrow.png`)]);
+async function start(signal:AbortSignal){
+  load.classList.remove('error');load.querySelector('strong')!.textContent=translate('loading.title');detail.textContent=translate('loading.detail');load.hidden=false;
+  [model,entityImage,speedArrowImage]=await Promise.all([loadMap(signal),image(`${base}assets/ddnet-entities.png`,signal),image(`${base}assets/ddnet-speed-arrow.png`,signal)]);
+  ensureActive(signal);
   foregroundLayerStart=findForegroundLayerStart(model);
   for(const item of model.images.filter(i=>i.external)){
     if(item.name.includes('..')||/[\\/]/.test(item.name))throw new Error('Небезопасное имя внешнего mapres');
-    const img=await image(`${base}mapres/${encodeURIComponent(item.name)}.png`),c=document.createElement('canvas');
+    const img=await image(`${base}mapres/${encodeURIComponent(item.name)}.png`,signal);ensureActive(signal);const c=document.createElement('canvas');
     c.width=img.width;c.height=img.height;c.getContext('2d')!.drawImage(img,0,0);
     item.width=img.width;item.height=img.height;item.pixels=new Uint8Array(c.getContext('2d')!.getImageData(0,0,img.width,img.height).data);
   }
-  const response=await fetch(`${base}camera-route.json`);if(!response.ok)throw new Error(`Маршрут: HTTP ${response.status}`);
-  const savedConfig=validateRoute(await response.json());let config=savedConfig;
-  const contentResponse=await fetch(`${base}site-sections.json`);if(!contentResponse.ok)throw Error('Не удалось загрузить разделы сайта');contentConfig=validateContent(await contentResponse.json());
+  const response=await fetch(`${base}camera-route.json`,{signal});if(!response.ok)throw new Error(`Маршрут: HTTP ${response.status}`);
+  const savedConfig=validateRoute(await response.json());ensureActive(signal);let config=savedConfig;
+  const contentResponse=await fetch(`${base}site-sections.json`,{signal});if(!contentResponse.ok)throw Error('Не удалось загрузить разделы сайта');contentConfig=validateContent(await contentResponse.json());ensureActive(signal);
   if(import.meta.env.DEV&&['localhost','127.0.0.1','[::1]'].includes(location.hostname)&&new URLSearchParams(location.search).get('editor')==='1'){
     const {prepareEditorRoute}=await import('./editor');config=await prepareEditorRoute(savedConfig);
   }
-  navigation=new GameplayNavigation(model,config.zoom??config.points[0]?.zoom??1.1);
+  ensureActive(signal);navigation=new GameplayNavigation(model,config.zoom??config.points[0]?.zoom??1.1);
   route=new CameraRoute(config,navigation);follower=new SiteFollower(route);buildSections();
   follower.distance=follower.target=route.section('home');camera=route.at(follower.distance);
   createRenderers();
@@ -257,12 +273,42 @@ async function start(){
   on(canvas,'webglcontextrestored',contextRestored);on(foregroundCanvas,'webglcontextrestored',contextRestored);
   if(import.meta.env.DEV&&['localhost','127.0.0.1','[::1]'].includes(location.hostname)&&new URLSearchParams(location.search).get('editor')==='1'){
     const {RouteEditor}=await import('./editor');
+    ensureActive(signal);
     editor=new RouteEditor(canvas,route.config,camera,replaceRoute,()=>follower,()=>route,savedConfig);
-    const {mountContentEditor}=await import('./content-editor');contentEditor=mountContentEditor(contentConfig,()=>route.config,()=>camera,(c,rebuild=false)=>{contentConfig=c;if(rebuild)buildSections();else{siteSections=resolveSections(route.config,c);applySiteLayouts();}},()=>editor?.navigate('home'));removers.push(()=>contentEditor?.dispose());
+    const {mountContentEditor}=await import('./content-editor');ensureActive(signal);contentEditor=mountContentEditor(contentConfig,()=>route.config,()=>camera,(c,rebuild=false)=>{contentConfig=c;if(rebuild)buildSections();else{siteSections=resolveSections(route.config,c);applySiteLayouts();}},()=>editor?.navigate('home'));
   }
+  ensureActive(signal);
   document.body.classList.add('ready');load.hidden=true;canvas.dataset.ready='true';clockStart=performance.now();restartFrame();
 }
 function showError(e:unknown){load.hidden=false;load.classList.add('error');detail.textContent=e instanceof Error?e.message:String(e);load.querySelector('strong')!.textContent=translate('loading.error');console.error(e);}
+function stopApp(){
+  cancelAnimationFrame(raf);raf=0;worker?.terminate();worker=undefined;
+  editor?.dispose();editor=undefined;contentEditor?.dispose();contentEditor=undefined;
+  renderer?.dispose();renderer=undefined;foregroundRenderer?.dispose();foregroundRenderer=undefined;rendererRestoring=false;
+  navObserver?.disconnect();navObserver=undefined;navHighlight=undefined;navHighlightReady=false;
+  for(const off of appRemovers.splice(0))off();
+  $('#world-space').replaceChildren();$('header nav').replaceChildren();
+  document.body.classList.remove('ready','layout-edit-mode','editing');delete document.body.dataset.entities;
+  canvas.removeAttribute('data-ready');$('#entities').setAttribute('aria-pressed','false');entities=false;
+  load.hidden=true;load.classList.remove('error');
+  model=undefined as unknown as MapModel;route=undefined as unknown as CameraRoute;follower=undefined as unknown as SiteFollower;navigation=undefined as unknown as GameplayNavigation;
+  entityImage=undefined as unknown as HTMLImageElement;speedArrowImage=undefined as unknown as HTMLImageElement;contentConfig={version:1,sections:[]};siteSections=[];activeSection='';
+}
+function deactivateApp(){
+  if(startController&&!startController.signal.aborted)startController.abort();
+  stopApp();appStarted=false;
+}
+function activateApp(){
+  if(disposed||appStarted||startController)return;
+  const controller=new AbortController();startController=controller;
+  void start(controller.signal).then(()=>{if(!controller.signal.aborted)appStarted=true;}).catch(error=>{if(!controller.signal.aborted)showError(error);}).finally(()=>{
+    if(startController===controller)startController=undefined;
+    if(controller.signal.aborted&&desktopMedia.matches&&!appStarted)activateApp();
+  });
+}
 initLanguagePicker();refreshLocalization();
-void start().catch(showError);
-if(import.meta.hot)import.meta.hot.dispose(()=>{disposed=true;cancelAnimationFrame(raf);worker?.terminate();editor?.dispose();renderer?.dispose();foregroundRenderer?.dispose();for(const off of removers)off();});
+const desktopMedia=window.matchMedia('(min-width: 1024px)');
+const viewportMode=new DesktopModeController(()=>{document.body.classList.remove('desktop-gated');activateApp();},()=>{document.body.classList.add('desktop-gated');deactivateApp();});
+onPersistent(desktopMedia,'change',(event:Event)=>viewportMode.update((event as MediaQueryListEvent).matches?1024:0));
+viewportMode.update(innerWidth);
+if(import.meta.hot)import.meta.hot.dispose(()=>{disposed=true;deactivateApp();for(const off of persistentRemovers.splice(0))off();});

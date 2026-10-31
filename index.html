@@ -21,8 +21,8 @@
 				<button data-section="download" data-i18n="nav.download">Download</button>
 			</nav>
 			<div class="language-switcher">
-				<button id="language-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Choose language">
-					<span id="language-code">EN</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m2 4 4 4 4-4"/></svg>
+				<button id="language-trigger" data-language-trigger type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Choose language">
+					<span id="language-code" data-language-code>EN</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m2 4 4 4 4-4"/></svg>
 				</button>
 				<div id="language-menu" role="listbox" aria-label="Choose language" data-i18n-attr="aria-label:language.choose" hidden>
 					<button type="button" role="option" data-locale="en" aria-selected="true">English</button>
@@ -33,6 +33,26 @@
 		</div>
 		<a class="repo" href="https://github.com/AlyaDDNet/AMF-Client" target="_blank" rel="noopener noreferrer" aria-label="AMF Client on GitHub" data-i18n-attr="aria-label:repository.label">GitHub ↗</a>
 	</header>
+	<main id="desktop-gate" aria-labelledby="desktop-gate-title">
+		<div class="language-switcher desktop-gate-language">
+			<button id="desktop-language-trigger" data-language-trigger type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Choose language" data-i18n-attr="aria-label:language.choose">
+				<span data-language-code>EN</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m2 4 4 4 4-4"/></svg>
+			</button>
+			<div id="desktop-language-menu" role="listbox" aria-label="Choose language" data-i18n-attr="aria-label:language.choose" hidden>
+				<button type="button" role="option" data-locale="en" aria-selected="true">English</button>
+				<button type="button" role="option" data-locale="ru" aria-selected="false">Русский</button>
+				<button type="button" role="option" data-locale="uk" aria-selected="false">Українська</button>
+			</div>
+		</div>
+		<section class="desktop-gate-card">
+			<div class="desktop-gate-icon" aria-hidden="true">
+				<svg viewBox="0 0 48 48" fill="none"><rect x="5.5" y="7.5" width="37" height="26" rx="4.5"/><path d="M17 41h14M24 34v7M11 28h26"/></svg>
+			</div>
+			<h1 id="desktop-gate-title">AMF Client</h1>
+			<p class="desktop-gate-title" data-i18n="desktopOnly.title">Desktop Version Only</p>
+			<p class="desktop-gate-message" data-i18n="desktopOnly.message">AMF Client website is currently available on desktop computers. Mobile and tablet support is coming soon.</p>
+		</section>
+	</main>
 	<main id="content" aria-live="polite"><div id="world-space"></div></main>
 	<canvas id="map-foreground" aria-hidden="true"></canvas>
 	<div id="load" role="status"><span class="spinner"></span><strong data-i18n="loading.title">Loading the Nova world</strong><p id="load-detail" data-i18n="loading.detail">Reading the original For Site.map…</p></div>
