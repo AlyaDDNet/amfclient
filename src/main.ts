@@ -3,7 +3,7 @@ import type { MapModel } from './map/types';
 import { MapRenderer, cameraWithVerticalOffset, findForegroundLayerStart, type Camera } from './map/renderer';
 import { CameraRoute, validateRoute, type Section, type RouteConfig } from './route';
 import {SiteFollower,entitiesShortcut} from './site-navigation';
-import {resolveSections,validateContent,type SiteContent,type SiteSection} from './site-content';
+import {layoutItemTranslation,resolveSections,validateContent,type SiteContent,type SiteSection} from './site-content';
 import {applyElementLayout,applyWorldProjection,currentBreakpoint,elementLayout,worldTransform} from './site-layout';
 import {groupView,GAME_GROUP} from './map/renderer';
 import type { RouteEditor } from './editor';
@@ -133,11 +133,13 @@ function buildSections(){
       if(item.id===authoredFrame?.id)continue;
       let element:HTMLElement;
       if(item.type==='logo'){
-        const wordmark=document.createElement('div');wordmark.className='amf-worldmark';wordmark.setAttribute('role','group');wordmark.setAttribute('aria-label',item.text?`${item.title}. ${item.text}`:item.title);
+        const wordmark=document.createElement('div');wordmark.className='amf-worldmark';wordmark.setAttribute('role','group');wordmark.setAttribute('aria-label',item.title);
         const title=document.createElement('h1');title.className='amf-worldmark-title';
         const amf=document.createElement('span'),space=document.createElement('span'),client=document.createElement('span');
         amf.className='amf-worldmark-amf';amf.textContent='AMF';space.className='amf-worldmark-space';space.textContent=' ';client.className='amf-worldmark-client';client.textContent='Client';
-        title.append(amf,space,client);const tagline=document.createElement('p');tagline.className='amf-worldmark-subtitle';tagline.textContent=item.text;element=wordmark;wordmark.append(title,tagline);
+        title.append(amf,space,client);const tagline=document.createElement('p');tagline.className='amf-worldmark-subtitle';
+        const applyWordmarkLocale=()=>{const locale=currentLocale(),text=layoutItemTranslation(item,locale,translate('brand.wordmarkTagline',locale));tagline.textContent=text;wordmark.setAttribute('aria-label',`${item.title}. ${text}`);};
+        applyWordmarkLocale();on(document,'amf-locale-change',applyWordmarkLocale);element=wordmark;wordmark.append(title,tagline);
         element.className=`layout-custom layout-custom-logo amf-worldmark`;
         layoutElement(element,item.id,'custom-logo',s.layoutItems!.indexOf(item),s.layoutItems!.length);element.dataset.layoutCustom='true';
         content.append(element);

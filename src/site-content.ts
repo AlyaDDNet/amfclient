@@ -1,6 +1,7 @@
 import { mainPoints } from './site-navigation';
 import type { RouteConfig } from './route';
 import { LAYOUT_BREAKPOINTS, type ElementLayout, type LayoutBreakpoint, type LayoutExtra, type LayoutItem, type LayoutItemType, type LayoutProfiles } from './site-layout';
+import { LOCALES, type Locale } from './i18n';
 
 export interface SiteAction { label: string; sectionId?: string; href?: string; download?: boolean }
 export interface SiteSection {
@@ -20,6 +21,15 @@ export interface SiteSection {
 	layoutRemoved?: string[];
 }
 export interface SiteContent { version: 1; sections: SiteSection[] }
+
+export function updateLayoutItemTranslation(item: LayoutItem, locale: Locale, text: string): void {
+	item.translations ??= {};
+	item.translations[locale] = text;
+}
+
+export function layoutItemTranslation(item: LayoutItem, locale: Locale, fallback: string): string {
+	return item.translations?.[locale] ?? fallback;
+}
 
 const names = ['Главная', 'Возможности', 'Оптимизация', 'Интерфейс', 'Статистика', 'Персонализация', 'Скачать'];
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
@@ -102,6 +112,10 @@ export function validateContent(raw: unknown): SiteContent {
 			const itemIds = new Set<string>();
 			for (const item of s.layoutItems) {
 				if (!item || typeof item.id !== 'string' || !/^[-\w:]+$/.test(item.id) || itemIds.has(item.id) || !['text', 'card', 'button', 'panel', 'logo'].includes(item.type) || typeof item.title !== 'string' || typeof item.text !== 'string' || item.title.length > 1000 || item.text.length > 4000 || item.sectionId !== undefined && typeof item.sectionId !== 'string' || item.href !== undefined && (typeof item.href !== 'string' || item.href.length > 2000 || !SAFE_URL.test(item.href))) throw Error('Некорректный пользовательский элемент');
+				if (item.translations !== undefined) {
+					if (!item.translations || typeof item.translations !== 'object' || Array.isArray(item.translations)) throw Error('Некорректные переводы пользовательского элемента');
+					for (const [locale, text] of Object.entries(item.translations)) if (!LOCALES.includes(locale as Locale) || typeof text !== 'string' || text.length > 4000) throw Error('Некорректный перевод пользовательского элемента');
+				}
 				itemIds.add(item.id);
 			}
 		}

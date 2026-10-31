@@ -1,4 +1,5 @@
 import type { SiteSection } from './site-content';
+import type { Locale } from './i18n';
 
 export type LayoutBreakpoint = 'desktop' | 'tablet' | 'mobile';
 export type LayoutAlign = 'left' | 'center' | 'right';
@@ -52,7 +53,7 @@ export interface ElementLayout {
 export type LayoutProfile = Record<string, Partial<ElementLayout>>;
 export type LayoutProfiles = Partial<Record<LayoutBreakpoint, LayoutProfile>>;
 export interface LayoutExtra { id: string; sourceId: string; title?: string; text?: string; label?: string; href?: string }
-export interface LayoutItem { id: string; type: LayoutItemType; title: string; text: string; sectionId?: string; href?: string }
+export interface LayoutItem { id: string; type: LayoutItemType; title: string; text: string; translations?: Partial<Record<Locale, string>>; sectionId?: string; href?: string }
 export interface WorldAnchor { x: number; y: number }
 export interface WorldView { x: number; y: number; width: number; height: number }
 export interface ScreenPoint { x: number; y: number }

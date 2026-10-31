@@ -1,8 +1,8 @@
 import { applyElementLayout, currentBreakpoint, defaultElementLayout, elementLayout, LAYOUT_BREAKPOINTS, materializeSectionLayout, PANEL_LAYOUT_ID, sectionContentFrameId, type ElementLayout, type LayoutBreakpoint, type LayoutExtra, type LayoutItem, type LayoutItemType, type WorldAnchor } from './site-layout';
-import { validateContent, type SiteContent, type SiteSection } from './site-content';
+import { updateLayoutItemTranslation, validateContent, type SiteContent, type SiteSection } from './site-content';
 import type { RouteConfig } from './route';
 import type { Camera } from './map/renderer';
-import { sectionLabel } from './i18n';
+import { LOCALES, currentLocale, sectionLabel, translate } from './i18n';
 
 interface Entry { section: SiteSection; element: HTMLElement; id: string; role: string; index: number }
 interface Selection { sectionId: string; id: string }
@@ -96,6 +96,20 @@ export function mountContentEditor(initial: SiteContent, getRoute: () => RouteCo
 	const commitDiscrete = (before: SiteContent) => { undoStack.push(before); if (undoStack.length > 80) undoStack.shift(); redoStack = []; refreshCommandState(); };
 	const updateContentField = (entry: Entry, field: string, value: string) => {
 		const section = entry.section;
+		if (field.startsWith('translation:') && entry.element.dataset.layoutCustom === 'true') {
+			const item = section.layoutItems?.find(candidate => candidate.id === entry.id);
+			const locale = field.slice('translation:'.length);
+			if (item?.type === 'logo' && LOCALES.includes(locale as (typeof LOCALES)[number])) {
+				updateLayoutItemTranslation(item, locale as (typeof LOCALES)[number], value);
+				if (locale === currentLocale()) {
+					const tagline = entry.element.querySelector<HTMLElement>('.amf-worldmark-subtitle');
+					if (tagline) tagline.textContent = value;
+					entry.element.setAttribute('aria-label', `${item.title}. ${value}`);
+				}
+			}
+			notifyChange(false);
+			return;
+		}
 		if (entry.element.dataset.layoutExtra === 'true') {
 			const extra = section.layoutExtras?.find(item => item.id === entry.id);
 			if (extra) Object.assign(extra, { [field]: value });
@@ -171,7 +185,12 @@ export function mountContentEditor(initial: SiteContent, getRoute: () => RouteCo
 		const section = entry.section, extra = section.layoutExtras?.find(item => item.id === entry.id);
 		if (entry.element.dataset.layoutCustom === 'true') {
 			const item = section.layoutItems?.find(value => value.id === entry.id); if (!item || item.type === 'panel') return;
-			if (item.type === 'logo') { const note = document.createElement('p'); note.className = 'layout-empty'; note.textContent = 'AMF Client остаётся названием бренда. Слоган редактируется отдельно и перемещается вместе с логотипом.'; container.append(note, textInput('Слоган', 'text', item.text)); return; }
+			if (item.type === 'logo') {
+				const note = document.createElement('p'); note.className = 'layout-empty'; note.textContent = 'AMF Client остаётся названием бренда. Переводы слогана сохраняются отдельно и перемещаются вместе с логотипом.'; container.append(note);
+				const labels = { en: 'Слоган · EN', ru: 'Слоган · RU', uk: 'Слоган · UA' } as const;
+				for (const locale of LOCALES) container.append(textInput(labels[locale], `translation:${locale}`, item.translations?.[locale] ?? translate('brand.wordmarkTagline', locale)));
+				return;
+			}
 			container.append(textInput('Заголовок / подпись', 'title', item.title), textInput('Текст', 'text', item.text, true));
 			if (item.type === 'button') { container.append(textInput('URL (HTTPS)', 'href', item.href ?? '')); const target = document.createElement('label'); target.className = 'layout-field'; target.append(document.createTextNode('Раздел камеры')); const select = document.createElement('select'); select.dataset.customSection = ''; const empty = document.createElement('option'); empty.value = ''; empty.textContent = 'Без перехода'; select.append(empty); for (const itemSection of draft.sections) { const option = document.createElement('option'); option.value = itemSection.id; option.textContent = itemSection.label; select.append(option); } select.value = item.sectionId ?? ''; target.append(select); container.append(target); }
 			return;
@@ -386,7 +405,8 @@ export function mountContentEditor(initial: SiteContent, getRoute: () => RouteCo
 		const source = selected[0] && findEntry(selected[0]); if (!source) return;
 		const before = structuredClone(draft), id = `copy-${crypto.randomUUID().slice(0, 10)}`;
 		if (source.role === 'custom-logo') {
-			const item: LayoutItem = { id, type: 'logo', title: 'AMF Client', text: source.section.layoutItems?.find(value => value.id === source.id)?.text ?? '' };
+			const sourceItem = source.section.layoutItems?.find(value => value.id === source.id);
+			const item: LayoutItem = { id, type: 'logo', title: 'AMF Client', text: sourceItem?.text ?? '', ...(sourceItem?.translations ? { translations: structuredClone(sourceItem.translations) } : {}) };
 			source.section.layoutItems ??= []; source.section.layoutItems.push(item);
 			for (const bp of LAYOUT_BREAKPOINTS) {
 				const layout = structuredClone(layoutFor(source, bp)); layout.worldX += 48; layout.worldY += 48; layout.coordinateSpace = 'world'; delete layout.parentId; layout.visible = true;

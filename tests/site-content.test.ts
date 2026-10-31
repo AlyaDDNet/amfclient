@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { validateContent } from '../src/site-content';
-import { defaultElementLayout, elementLayout, materializeSectionLayout, projectLayoutBox, screenToWorld, worldToScreen, worldTransform } from '../src/site-layout';
+import { layoutItemTranslation, updateLayoutItemTranslation, validateContent } from '../src/site-content';
+import { defaultElementLayout, elementLayout, materializeSectionLayout, projectLayoutBox, screenToWorld, sectionContentFrameId, worldToScreen, worldTransform } from '../src/site-layout';
 import { validateRoute } from '../src/route';
 import { cameraWithVerticalOffset, GAME_GROUP, groupView } from '../src/map/renderer';
 import { AMF_DOWNLOAD } from '../src/download-config';
@@ -24,7 +24,7 @@ test('verified direct download buttons are restored inside the download frame', 
 	assert.equal(actions[1]?.href, AMF_DOWNLOAD.releaseUrl);
 });
 
-test('all seven sections use localized content while every user-authored frame keeps exact geometry', async () => {
+test('all seven outer frames match desktop dimensions on tablet and mobile without moving any layout object', async () => {
 	const route = validateRoute(JSON.parse(await readFile(routePath, 'utf8')));
 	const points = route.points.filter(point => point.mandatory === true);
 	const content = validateContent(JSON.parse(await readFile(contentPath, 'utf8')));
@@ -45,27 +45,41 @@ test('all seven sections use localized content while every user-authored frame k
 				assert.notEqual(translate(key, locale), key, `${locale}:${key} must resolve to localized text`);
 			}
 		}
+		const before = previous.sections[index];
+		const outerFrameId = sectionContentFrameId(section);
+		const desktopFrame = section.layout?.desktop?.[outerFrameId];
+		assert.ok(desktopFrame, `${section.id} has its saved desktop outer frame`);
 		for (const breakpoint of ['desktop', 'tablet', 'mobile'] as const) {
-			const before = previous.sections[index];
-			const current = section.layout?.[breakpoint] ?? {};
-			const frameIds = ['nova-panel', ...(before.layoutItems ?? []).filter((item: { type: string }) => item.type === 'panel').map((item: { id: string }) => item.id)];
-			for (const id of frameIds) {
-				const oldFrame = before.layout[breakpoint][id], newFrame = current[id];
-				assert.ok(newFrame, `${section.id}:${breakpoint}:${id} must remain present`);
-				assert.deepEqual([newFrame.worldX, newFrame.worldY, newFrame.width, newFrame.height], [oldFrame.worldX, oldFrame.worldY, oldFrame.width, oldFrame.height]);
+			const oldProfile = before.layout[breakpoint] as Record<string, Record<string, unknown>>;
+			const currentProfile = section.layout?.[breakpoint] as Record<string, Record<string, unknown>>;
+			const oldFrame = oldProfile[outerFrameId], newFrame = currentProfile[outerFrameId];
+			assert.ok(newFrame, `${section.id}:${breakpoint}:${outerFrameId} must remain present`);
+			assert.deepEqual([newFrame.worldX, newFrame.worldY], [oldFrame.worldX, oldFrame.worldY], `${section.id}:${breakpoint} frame coordinates are unchanged`);
+			if (breakpoint === 'desktop') assert.deepEqual([newFrame.worldX, newFrame.worldY, newFrame.width, newFrame.height], [oldFrame.worldX, oldFrame.worldY, oldFrame.width, oldFrame.height], `${section.id} desktop frame geometry is unchanged`);
+			else {
+				assert.deepEqual([newFrame.width, newFrame.height], [desktopFrame.width, desktopFrame.height], `${section.id}:${breakpoint} dimensions match desktop`);
 			}
-			const parentId = section.layoutRemoved?.includes('nova-panel') ? section.layoutItems?.find(item => item.type === 'panel')?.id : 'nova-panel';
-			const frame = current[parentId!];
-			assert.equal(frame.coordinateSpace, 'world');
-			const frameWidth = frame.width as number, frameHeight = frame.height as number;
-			const children = Object.entries(current).filter(([id, value]) => !frameIds.includes(id) && (value as { coordinateSpace?: string; parentId?: string }).coordinateSpace === 'parent');
-			for (const [id, value] of children) {
-				const child = value as { worldX: number; worldY: number; width: number; height: number; parentId?: string };
-				assert.equal(child.parentId, parentId, `${section.id}:${breakpoint}:${id} must be attached to its visible frame`);
-				assert.ok(child.worldX >= 12 && child.worldY >= 10, `${section.id}:${breakpoint}:${id} has an inset`);
-				assert.ok(child.worldX + child.width <= frameWidth - 12, `${section.id}:${breakpoint}:${id} stays inside the frame horizontally`);
-				assert.ok(child.worldY + child.height <= frameHeight - 10, `${section.id}:${breakpoint}:${id} stays inside the frame vertically`);
+			for (const id of Object.keys(oldProfile)) {
+				if (id === outerFrameId) continue;
+				const current = currentProfile[id], previousGeometry = oldProfile[id];
+				assert.ok(current, `${section.id}:${breakpoint}:${id} remains present`);
+				assert.deepEqual([current.worldX, current.worldY, current.width, current.height], [previousGeometry.worldX, previousGeometry.worldY, previousGeometry.width, previousGeometry.height], `${section.id}:${breakpoint}:${id} was not moved or resized`);
 			}
+		}
+	}
+});
+
+test('every outer frame has equal width and height across all three device profiles', async () => {
+	const content = validateContent(JSON.parse(await readFile(contentPath, 'utf8')));
+	for (const section of content.sections) {
+		const id = sectionContentFrameId(section);
+		const desktop = section.layout?.desktop?.[id];
+		assert.ok(desktop, `${section.id}:${id} desktop profile exists`);
+		for (const breakpoint of ['tablet', 'mobile'] as const) {
+			const frame = section.layout?.[breakpoint]?.[id];
+			assert.ok(frame, `${section.id}:${breakpoint}:${id} profile exists`);
+			assert.equal(frame.width, desktop.width, `${section.id}:${breakpoint} width`);
+			assert.equal(frame.height, desktop.height, `${section.id}:${breakpoint} height`);
 		}
 	}
 });
@@ -102,7 +116,17 @@ test('Home AMF Client wordmark keeps its saved responsive world geometry and edi
 	const home = content.sections.find(section => section.id === 'home')!;
 	const point = route.points.find(item => item.id === home.pointId)!;
 	const item = home.layoutItems?.find(value => value.id === 'amf-worldmark');
-	assert.deepEqual(item, { id: 'amf-worldmark', type: 'logo', title: 'AMF Client', text: 'Comfort. Control. Quality.' });
+	assert.deepEqual(item, { id: 'amf-worldmark', type: 'logo', title: 'AMF Client', text: 'Comfort. Control. Quality.', translations: { en: 'Comfort. Control. Quality.', ru: 'Комфорт. Контроль. Качество.', uk: 'Комфорт. Контроль. Якість.' } });
+	const savedLogoProfiles = JSON.parse(await readFile(resolve('tests/fixtures/home-wordmark-layout.json'), 'utf8'));
+	for (const breakpoint of ['desktop', 'tablet', 'mobile'] as const) assert.deepEqual(home.layout?.[breakpoint]?.['amf-worldmark'], savedLogoProfiles[breakpoint], `${breakpoint} logo geometry and styling remain unchanged`);
+	assert.equal(item.title, 'AMF Client');
+	assert.equal(layoutItemTranslation(item, 'en', translate('brand.wordmarkTagline', 'en')), 'Comfort. Control. Quality.');
+	assert.equal(layoutItemTranslation(item, 'uk', translate('brand.wordmarkTagline', 'uk')), 'Комфорт. Контроль. Якість.');
+	assert.equal(layoutItemTranslation(item, 'ru', translate('brand.wordmarkTagline', 'ru')), 'Комфорт. Контроль. Качество.');
+	const beforeTranslationEdit = structuredClone(item);
+	updateLayoutItemTranslation(item, 'ru', 'Комфорт. Контроль. Точность.');
+	assert.deepEqual(item.translations, { en: beforeTranslationEdit.translations!.en, ru: 'Комфорт. Контроль. Точность.', uk: beforeTranslationEdit.translations!.uk });
+	assert.equal(item.title, 'AMF Client');
 	for (const breakpoint of ['desktop', 'tablet', 'mobile'] as const) {
 		const profile = home.layout?.[breakpoint]?.['amf-worldmark'];
 		assert.ok(profile, `${breakpoint} keeps a saved wordmark profile`);

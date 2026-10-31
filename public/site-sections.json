@@ -231,8 +231,8 @@
           "layout-281faf65-8": {
             "worldX": 4250.488169351259,
             "worldY": 1654.1248937458533,
-            "width": 470,
-            "height": 320,
+            "width": 468.50899741111516,
+            "height": 147.0310343168196,
             "zIndex": 3,
             "backgroundOpacity": 85,
             "blur": 14,
@@ -412,8 +412,8 @@
           "layout-281faf65-8": {
             "worldX": 4315.488169351259,
             "worldY": 1684.1248937458533,
-            "width": 390,
-            "height": 260,
+            "width": 468.50899741111516,
+            "height": 147.0310343168196,
             "zIndex": 3,
             "backgroundOpacity": 85,
             "blur": 14,
@@ -576,7 +576,12 @@
           "id": "amf-worldmark",
           "type": "logo",
           "title": "AMF Client",
-          "text": "Comfort. Control. Quality."
+          "text": "Comfort. Control. Quality.",
+          "translations": {
+            "en": "Comfort. Control. Quality.",
+            "ru": "Комфорт. Контроль. Качество.",
+            "uk": "Комфорт. Контроль. Якість."
+          }
         }
       ]
     },
@@ -784,8 +789,8 @@
           "nova-panel": {
             "worldX": 2080.2932485117963,
             "worldY": 532.3076201243346,
-            "width": 850,
-            "height": 720,
+            "width": 498.0649211107634,
+            "height": 362.9439583585464,
             "zIndex": 1,
             "backgroundOpacity": 85,
             "blur": 14,
@@ -959,8 +964,8 @@
           "nova-panel": {
             "worldX": 2275.2932485117963,
             "worldY": 482.30762012433456,
-            "width": 460,
-            "height": 880,
+            "width": 498.0649211107634,
+            "height": 362.9439583585464,
             "zIndex": 1,
             "backgroundOpacity": 85,
             "blur": 14,
@@ -1303,8 +1308,8 @@
           "nova-panel": {
             "worldX": 2481.15491186483,
             "worldY": 1539.644602047484,
-            "width": 850,
-            "height": 720,
+            "width": 783.4988016932639,
+            "height": 400.4784414530768,
             "zIndex": 1,
             "backgroundOpacity": 85,
             "blur": 14,
@@ -1449,8 +1454,8 @@
           "nova-panel": {
             "worldX": 2676.15491186483,
             "worldY": 1489.644602047484,
-            "width": 460,
-            "height": 880,
+            "width": 783.4988016932639,
+            "height": 400.4784414530768,
             "zIndex": 1,
             "backgroundOpacity": 85,
             "blur": 14,
@@ -1764,8 +1769,8 @@
           "nova-panel": {
             "worldX": 3800.9132672090354,
             "worldY": 652.4381648245935,
-            "width": 850,
-            "height": 720,
+            "width": 658.6251114853198,
+            "height": 308.33336375848614,
             "zIndex": 1,
             "backgroundOpacity": 85,
             "blur": 14,
@@ -1910,8 +1915,8 @@
           "nova-panel": {
             "worldX": 3995.9132672090354,
             "worldY": 602.4381648245935,
-            "width": 460,
-            "height": 880,
+            "width": 658.6251114853198,
+            "height": 308.33336375848614,
             "zIndex": 1,
             "backgroundOpacity": 85,
             "blur": 14,
@@ -2225,8 +2230,8 @@
           "nova-panel": {
             "worldX": 4025.8667250939316,
             "worldY": 1474.4278086123097,
-            "width": 850,
-            "height": 720,
+            "width": 307.528423885381,
+            "height": 355.94030135002276,
             "zIndex": 1,
             "backgroundOpacity": 85,
             "blur": 14,
@@ -2371,8 +2376,8 @@
           "nova-panel": {
             "worldX": 4220.866725093932,
             "worldY": 1424.4278086123097,
-            "width": 460,
-            "height": 880,
+            "width": 307.528423885381,
+            "height": 355.94030135002276,
             "zIndex": 1,
             "backgroundOpacity": 85,
             "blur": 14,
@@ -2686,8 +2691,8 @@
           "nova-panel": {
             "worldX": 5089.258569570734,
             "worldY": 609.2191215521434,
-            "width": 850,
-            "height": 720,
+            "width": 530.8599047315674,
+            "height": 218.16798097666606,
             "zIndex": 1,
             "backgroundOpacity": 85,
             "blur": 14,
@@ -2832,8 +2837,8 @@
           "nova-panel": {
             "worldX": 5284.258569570734,
             "worldY": 559.2191215521434,
-            "width": 460,
-            "height": 880,
+            "width": 530.8599047315674,
+            "height": 218.16798097666606,
             "zIndex": 1,
             "backgroundOpacity": 85,
             "blur": 14,
@@ -3211,8 +3216,8 @@
           "nova-panel": {
             "worldX": 5305.029343020473,
             "worldY": 1289.9658769789053,
-            "width": 850,
-            "height": 720,
+            "width": 618.8127815504686,
+            "height": 376.76620320163715,
             "zIndex": 1,
             "backgroundOpacity": 85,
             "blur": 14,
@@ -3415,8 +3420,8 @@
           "nova-panel": {
             "worldX": 5500.029343020473,
             "worldY": 1239.9658769789053,
-            "width": 460,
-            "height": 880,
+            "width": 618.8127815504686,
+            "height": 376.76620320163715,
             "zIndex": 1,
             "backgroundOpacity": 85,
             "blur": 14,
