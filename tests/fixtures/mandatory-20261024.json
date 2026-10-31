@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "zoom": 0.5,
+  "points": [
+    {"id":"home","x":908.8209243611855,"y":1725.7897735816855,"zoom":0.5,"mandatory":true},
+    {"id":"start-gate","x":2447.7098074958008,"y":1073.1719749748593,"zoom":0.5,"mandatory":true},
+    {"id":"features","x":2894.87385468936,"y":2056.1271778147684,"zoom":0.5,"mandatory":true},
+    {"id":"point-3e216065","x":4250.465763523911,"y":1173.8845982166522,"zoom":0.5,"mandatory":true},
+    {"id":"point-683e44c8","x":4457.93376740202,"y":2001.7423612641992,"zoom":0.5,"mandatory":true},
+    {"id":"point-94b3bacb","x":5465.059999819961,"y":1111.4427718067386,"zoom":0.5,"mandatory":true},
+    {"id":"download","x":5716.542517977893,"y":1822.1774836811185,"zoom":0.5,"mandatory":true}
+  ],
+  "sections":{"home":"home","features":"features","download":"download"}
+}

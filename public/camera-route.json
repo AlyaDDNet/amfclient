@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "mode": "freehand",
+  "zoom": 1.1,
+  "points": [
+    {
+      "id": "point-0684f50b",
+      "x": 906.7745256792855,
+      "y": 1674.442163436433,
+      "zoom": 1.1,
+      "mandatory": true
+    },
+    {
+      "id": "point-3cc1b32f",
+      "x": 2445.5609031283684,
+      "y": 1139.3544353985105,
+      "zoom": 1.1,
+      "mandatory": true
+    },
+    {
+      "id": "point-c298d81f",
+      "x": 2863.4901694562086,
+      "y": 2063.5901159649848,
+      "zoom": 1.1,
+      "mandatory": true
+    },
+    {
+      "id": "point-9979508c",
+      "x": 4225.913267209035,
+      "y": 1162.4381648245935,
+      "zoom": 1.1,
+      "mandatory": true
+    },
+    {
+      "id": "point-52189865",
+      "x": 4519.157509058623,
+      "y": 1998.7151123684976,
+      "zoom": 1.1,
+      "mandatory": true
+    },
+    {
+      "id": "point-ca69e517",
+      "x": 5471.565069871353,
+      "y": 1210.8357487708408,
+      "zoom": 1.1,
+      "mandatory": true
+    },
+    {
+      "id": "point-08a0d5c0",
+      "x": 5606.108494217777,
+      "y": 1848.2791771217633,
+      "zoom": 1.1,
+      "mandatory": true
+    }
+  ],
+  "sections": {
+    "home": "point-0684f50b",
+    "features": "point-3cc1b32f",
+    "download": "point-08a0d5c0"
+  },
+  "segments": [],
+  "editableAnchors": true
+}

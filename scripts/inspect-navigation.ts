@@ -1,0 +1,11 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import {parseMap} from '../src/map/parse';
+const b=readFileSync('public/maps/for-site.map');
+const model=parseMap(b.buffer.slice(b.byteOffset,b.byteOffset+b.length));
+const g=model.layers.find(l=>l.kind==='tiles'&&(l.tileFlags&1))!;
+if(g.kind!=='tiles')throw Error('game');
+const glyph=(n:number)=>n===1?'#':n===3?'X':n===9?'~':n===192?'S':n===33?'A':n===34?'Z':n?'?':' ';
+for(let y=0;y<g.height;y++)console.log(String(y).padStart(2)+' '+Array.from({length:g.width},(_,x)=>glyph(g.tiles[(y*g.width+x)*4])).join(''));
+console.log(model.layers.filter(l=>l.kind==='tiles'&&l.tileFlags).map(l=>({name:l.name,...(l.kind==='tiles'?{flags:l.tileFlags,marks:l.marks}: {})})));
+const cells=Array.from({length:g.width*g.height},(_,i)=>g.tiles[i*4]);
+writeFileSync('artifacts/game-grid.json',JSON.stringify({width:g.width,height:g.height,cells}));

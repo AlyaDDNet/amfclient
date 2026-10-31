@@ -1,0 +1,20 @@
+AMF Website Phase 1 — third-party asset notices
+
+Comfort Entities atlas (assets/ddnet-entities.png)
+Copyright louis
+CC BY-SA 3.0 — https://creativecommons.org/licenses/by-sa/3.0/
+Unmodified original resource: DDNet 20.1.1, data/assets/entities/comfort/ddnet.png
+Original notice: entities.txt
+
+Speedup arrow (assets/ddnet-speed-arrow.png)
+DDNet / Teeworlds contributors, original DDNet data/editor/speed_arrow.png
+CC BY-SA 3.0, as stated in the original distribution notice DDNet.txt.
+
+fflate zlib decompression — Copyright (c) 2020 Arjun Barrett
+MIT — see fflate.txt.
+
+Build tooling and generated Vite helpers — MIT, see Vite.txt.
+
+The user-provided For Site.map is copied unchanged with all embedded images.
+Its author/license metadata is empty. Redistribution rights for that map and
+its embedded resources must be verified before public deployment.

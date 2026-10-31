@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "points": [
+    { "id": "home", "x": 1050, "y": 760, "zoom": 1.1 },
+    { "id": "bend-1", "x": 1820, "y": 1200, "zoom": 1.08 },
+    { "id": "bend-2", "x": 2580, "y": 1550, "zoom": 1.08 },
+    { "id": "features", "x": 3500, "y": 1050, "zoom": 1.15 },
+    { "id": "bend-3", "x": 4450, "y": 700, "zoom": 1.08 },
+    { "id": "bend-4", "x": 5370, "y": 1200, "zoom": 1.08 },
+    { "id": "download", "x": 6460, "y": 1000, "zoom": 1.15 }
+  ],
+  "sections": { "home": "home", "features": "features", "download": "download" }
+}

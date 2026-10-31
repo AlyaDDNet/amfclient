@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+const dev=process.argv[2]??'http://127.0.0.1:5173';
+const prod=process.argv[3]??'http://127.0.0.1:4173';
+for(const path of ['/','/src/main.ts','/src/editor.ts']){const r=await fetch(dev+path);assert.equal(r.status,200,path);assert.ok(!(await r.text()).includes('Failed to resolve import'));}
+const onlyPost=await fetch(dev+'/__dev/route');assert.equal(onlyPost.status,405);
+const denied=await fetch(dev+'/__dev/route',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://example.invalid'},body:'{}'});assert.equal(denied.status,403);
+const invalid=await fetch(dev+'/__dev/route',{method:'POST',headers:{'Content-Type':'application/json',Origin:dev},body:'{}'});assert.equal(invalid.status,400);
+const before=await (await fetch(dev+'/camera-route.json')).text(),bad=JSON.parse(before);
+bad.points[0].x=-100;
+const blocked=await fetch(dev+'/__dev/route',{method:'POST',headers:{'Content-Type':'application/json',Origin:dev,'X-AMF-Route-Replace':'confirmed'},body:JSON.stringify(bad)});
+assert.equal(blocked.status,400);assert.match(await blocked.text(),/стене|кадром|границами/);
+assert.equal(await (await fetch(dev+'/camera-route.json')).text(),before,'invalid geometry must not overwrite route');
+const stale=await fetch(dev+'/__dev/route',{method:'POST',headers:{'Content-Type':'application/json',Origin:dev,'X-AMF-Route-Version':'stale'},body:before});assert.equal(stale.status,409);assert.equal(await (await fetch(dev+'/camera-route.json')).text(),before);
+const index=await fetch(prod+'/');assert.equal(index.status,200);
+const text=await index.text();assert.ok(!text.includes('/src/main.ts'));assert.ok(text.includes('./assets/'));
+const bytes=await (await fetch(prod+'/maps/for-site.map')).arrayBuffer();assert.equal(createHash('sha256').update(new Uint8Array(bytes)).digest('hex'),'63cbc6c5ba1da35f7449a1d9d8a4bec5274e025a9c84445cdb3dce8f76b3f0eb');
+const route=await (await fetch(prod+'/camera-route.json')).json();assert.equal(route.version,1);assert.ok(route.points.length>=2);
+const api=await fetch(prod+'/__dev/route',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});assert.equal(api.status,404);
+console.log('HTTP smoke passed: dev modules, local-only route endpoint, static production, real map SHA, route JSON; no user route written.');
