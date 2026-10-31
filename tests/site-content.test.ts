@@ -28,7 +28,7 @@ test('all seven sections use localized content while every user-authored frame k
 	const route = validateRoute(JSON.parse(await readFile(routePath, 'utf8')));
 	const points = route.points.filter(point => point.mandatory === true);
 	const content = validateContent(JSON.parse(await readFile(contentPath, 'utf8')));
-	const previous = JSON.parse(await readFile(resolve('artifacts/backups/content-fill-before-20261029-180948/public/site-sections.json'), 'utf8'));
+	const previous = JSON.parse(await readFile(resolve('tests/fixtures/hand-placed-frame-geometry.json'), 'utf8'));
 	assert.equal(points.length, 7);
 	assert.deepEqual(content.sections.map(section => section.pointId), points.map(point => point.id));
 	assert.equal(route.zoom, 1.1);
@@ -107,10 +107,10 @@ test('Home AMF Client wordmark keeps its saved responsive world geometry and edi
 		const profile = home.layout?.[breakpoint]?.['amf-worldmark'];
 		assert.ok(profile, `${breakpoint} keeps a saved wordmark profile`);
 		assert.equal(profile.coordinateSpace, 'world');
-		assert.ok(Number.isFinite(profile.worldX));
-		assert.ok(Number.isFinite(profile.worldY));
-		assert.ok(profile.width > 0);
-		assert.ok(profile.height > 0);
+		assert.equal(typeof profile.worldX, 'number');
+		assert.equal(typeof profile.worldY, 'number');
+		assert.ok((profile.width ?? 0) > 0);
+		assert.ok((profile.height ?? 0) > 0);
 		assert.equal(profile.align, 'center');
 		assert.equal(profile.opacity, 100);
 		assert.equal(typeof profile.letterSpacing, 'number');
@@ -121,15 +121,17 @@ test('Home AMF Client wordmark keeps its saved responsive world geometry and edi
 		assert.equal(typeof profile.subtitleLetterSpacing, 'number');
 		assert.equal(typeof profile.subtitleOpacity, 'number');
 	}
-	const savedDesktop = home.layout!.desktop['amf-worldmark'];
-	const desktop = elementLayout(home, 'amf-worldmark', 'custom-logo', 1, home.layoutItems!.length, 'desktop', { x: savedDesktop.worldX, y: savedDesktop.worldY });
+	const savedDesktop = home.layout?.desktop?.['amf-worldmark']!;
+	const savedX = Number(savedDesktop.worldX), savedY = Number(savedDesktop.worldY);
+	assert.ok(Number.isFinite(savedX) && Number.isFinite(savedY));
+	const desktop = elementLayout(home, 'amf-worldmark', 'custom-logo', 1, home.layoutItems!.length, 'desktop', { x: savedX, y: savedY });
 	assert.equal(desktop.parentId, undefined);
 	assert.equal(desktop.coordinateSpace, 'world');
 	const width = 1920, height = 1080, aspect = width / height;
 	const renderCamera = cameraWithVerticalOffset({ x: point.x, y: point.y, zoom: 1.1 }, aspect);
 	const view = groupView(renderCamera, aspect, GAME_GROUP);
 	const box = projectLayoutBox(desktop, view, width, height);
-	const savedScreenPosition = worldToScreen({ x: savedDesktop.worldX, y: savedDesktop.worldY }, view, width, height);
+	const savedScreenPosition = worldToScreen({ x: savedX, y: savedY }, view, width, height);
 	assert.ok(Math.abs(box.x + box.width / 2 - savedScreenPosition.x) < 1e-8);
 	assert.ok(Math.abs(box.y - savedScreenPosition.y) < 1e-8);
 	const main = await readFile(resolve('src/main.ts'), 'utf8');

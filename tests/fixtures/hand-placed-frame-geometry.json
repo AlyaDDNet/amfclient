@@ -1,0 +1,237 @@
+{
+  "sections": [
+    {
+      "id": "home",
+      "layoutItems": [
+        {
+          "id": "layout-281faf65-8",
+          "type": "panel"
+        }
+      ],
+      "layout": {
+        "desktop": {
+          "nova-panel": {
+            "worldX": 823.9460125387156,
+            "worldY": 1319.0938331036093,
+            "width": 899.9999999999999,
+            "height": 379.1061599395937
+          },
+          "layout-281faf65-8": {
+            "worldX": 4262.349025094124,
+            "worldY": 1899.1682549574946,
+            "width": 468.50899741111516,
+            "height": 147.0310343168196
+          }
+        },
+        "tablet": {
+          "nova-panel": {
+            "worldX": 481.7745256792855,
+            "worldY": 1164.442163436433,
+            "width": 850,
+            "height": 720
+          },
+          "layout-281faf65-8": {
+            "worldX": 4250.488169351259,
+            "worldY": 1654.1248937458533,
+            "width": 470,
+            "height": 320
+          }
+        },
+        "mobile": {
+          "nova-panel": {
+            "worldX": 676.7745256792855,
+            "worldY": 1114.442163436433,
+            "width": 460,
+            "height": 880
+          },
+          "layout-281faf65-8": {
+            "worldX": 4315.488169351259,
+            "worldY": 1684.1248937458533,
+            "width": 390,
+            "height": 260
+          }
+        }
+      }
+    },
+    {
+      "id": "features",
+      "layoutItems": [],
+      "layout": {
+        "desktop": {
+          "nova-panel": {
+            "worldX": 2211.0300280580786,
+            "worldY": 750.2863734892597,
+            "width": 498.0649211107634,
+            "height": 362.9439583585464
+          }
+        },
+        "tablet": {
+          "nova-panel": {
+            "worldX": 2080.2932485117963,
+            "worldY": 532.3076201243346,
+            "width": 850,
+            "height": 720
+          }
+        },
+        "mobile": {
+          "nova-panel": {
+            "worldX": 2275.2932485117963,
+            "worldY": 482.30762012433456,
+            "width": 460,
+            "height": 880
+          }
+        }
+      }
+    },
+    {
+      "id": "optimization",
+      "layoutItems": [],
+      "layout": {
+        "desktop": {
+          "nova-panel": {
+            "worldX": 2473.878314369043,
+            "worldY": 1702.451421028747,
+            "width": 783.4988016932639,
+            "height": 400.4784414530768
+          }
+        },
+        "tablet": {
+          "nova-panel": {
+            "worldX": 2481.15491186483,
+            "worldY": 1539.644602047484,
+            "width": 850,
+            "height": 720
+          }
+        },
+        "mobile": {
+          "nova-panel": {
+            "worldX": 2676.15491186483,
+            "worldY": 1489.644602047484,
+            "width": 460,
+            "height": 880
+          }
+        }
+      }
+    },
+    {
+      "id": "interface",
+      "layoutItems": [],
+      "layout": {
+        "desktop": {
+          "nova-panel": {
+            "worldX": 3936.608843506058,
+            "worldY": 897.6777782721275,
+            "width": 658.6251114853198,
+            "height": 308.33336375848614
+          }
+        },
+        "tablet": {
+          "nova-panel": {
+            "worldX": 3800.9132672090354,
+            "worldY": 652.4381648245935,
+            "width": 850,
+            "height": 720
+          }
+        },
+        "mobile": {
+          "nova-panel": {
+            "worldX": 3995.9132672090354,
+            "worldY": 602.4381648245935,
+            "width": 460,
+            "height": 880
+          }
+        }
+      }
+    },
+    {
+      "id": "statistics",
+      "layoutItems": [],
+      "layout": {
+        "desktop": {
+          "nova-panel": {
+            "worldX": 4421.29689025503,
+            "worldY": 1540.7028292674509,
+            "width": 307.528423885381,
+            "height": 355.94030135002276
+          }
+        },
+        "tablet": {
+          "nova-panel": {
+            "worldX": 4025.8667250939316,
+            "worldY": 1474.4278086123097,
+            "width": 850,
+            "height": 720
+          }
+        },
+        "mobile": {
+          "nova-panel": {
+            "worldX": 4220.866725093932,
+            "worldY": 1424.4278086123097,
+            "width": 460,
+            "height": 880
+          }
+        }
+      }
+    },
+    {
+      "id": "personalization",
+      "layoutItems": [],
+      "layout": {
+        "desktop": {
+          "nova-panel": {
+            "worldX": 5221.417800290108,
+            "worldY": 931.0062370950288,
+            "width": 530.8599047315674,
+            "height": 218.16798097666606
+          }
+        },
+        "tablet": {
+          "nova-panel": {
+            "worldX": 5089.258569570734,
+            "worldY": 609.2191215521434,
+            "width": 850,
+            "height": 720
+          }
+        },
+        "mobile": {
+          "nova-panel": {
+            "worldX": 5284.258569570734,
+            "worldY": 559.2191215521434,
+            "width": 460,
+            "height": 880
+          }
+        }
+      }
+    },
+    {
+      "id": "download",
+      "layoutItems": [],
+      "layout": {
+        "desktop": {
+          "nova-panel": {
+            "worldX": 5315.203370131509,
+            "worldY": 1476.5816663322773,
+            "width": 618.8127815504686,
+            "height": 376.76620320163715
+          }
+        },
+        "tablet": {
+          "nova-panel": {
+            "worldX": 5305.029343020473,
+            "worldY": 1289.9658769789053,
+            "width": 850,
+            "height": 720
+          }
+        },
+        "mobile": {
+          "nova-panel": {
+            "worldX": 5500.029343020473,
+            "worldY": 1239.9658769789053,
+            "width": 460,
+            "height": 880
+          }
+        }
+      }
+    }
+  ]
+}
